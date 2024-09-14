@@ -8,6 +8,7 @@ client = MongoClient(config.CONNECTION_STRING)
 db = client[config.DATABASE_NAME]
 user_collection = db["users"]
 thread_collection = db["threads"]
+page_token_collection = db["page_token"]
 
 
 def update_messages(recipient_id: str, query: str, response: str) -> bool:
@@ -79,7 +80,6 @@ def get_thread(recipient_id: str) -> dict[str, any] | None:
     Get a thread by recipient_id.
 
     Parameters:
-        - thread_collection (Collection): MongoDB collection for threads
         - recipient_id (str): Recipient ID to search for
 
     Returns:
@@ -94,7 +94,6 @@ def create_thread(thread: dict) -> bool:
     Create a new thread for a recipient_id.
 
     Parameters:
-        - thread_collection (Collection): MongoDB collection for threads
         - thread (dict): Thread document to insert
 
     Returns:
@@ -109,9 +108,8 @@ def update_thread(recipient_id: str, thread_id: str) -> bool:
     Update an existing thread in the collection.
 
     Parameters:
-        - thread_collection (Collection): MongoDB collection for threads
         - recipient_id (str): Recipient ID of the thread to update
-        - update_data (dict): Data to update in the thread document
+        - thread_id (str): New thread id to store against the recipient_id
 
     Returns:
         - bool: True if the update was successful, False otherwise
@@ -130,3 +128,36 @@ def update_thread(recipient_id: str, thread_id: str) -> bool:
         return False
     else:
         return True
+
+
+def get_page_token(page_id: str) -> dict[str, any] | None:
+    '''Get Page token
+
+    Parameters:
+        - page_id(str): Facebook page id
+
+    Returns:
+        - bool, 0 for failure and 1 for success
+    '''
+    result = page_token_collection.find_one(
+        {
+            'page_id': page_id
+        }
+    )
+    if not result:
+        None
+    return result
+
+
+def create_page_token(page_token: dict) -> bool:
+    """
+    Create a new page token for a page_id.
+
+    Parameters:
+        - page_token(dict): Page token for the page_id
+
+    Returns:
+        - bool: True if the insertion was successful, False otherwise
+    """
+    result = page_token_collection.insert_one(page_token)
+    return result.acknowledged
