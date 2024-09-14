@@ -1,23 +1,39 @@
-from openai import OpenAI
+from datetime import datetime
+
+from openai import OpenAI, NotFoundError
 
 import config
-from utils import get_thread_id_from_recipient_id, update_thread_id_from_recipient_id
+from mongodb_api import create_thread, get_thread
 
 client = OpenAI(
     api_key=config.OPENAI_API_KEY
 )
 
 
-def ask_openai_assistant(query: str, recipient_id: str) -> str:
+def ask_openai_assistant(query: str, recipient_id: str, messages: list[dict[str, str]]) -> str:
     try:
-        thread_id = get_thread_id_from_recipient_id(recipient_id)
-        if thread_id:
-            thread = client.beta.threads.retrieve(
-                thread_id=thread_id
-            )
+        thread_from_db = get_thread(recipient_id=recipient_id)
+        thread = None
+        if thread_from_db:
+            try:
+                thread = client.beta.threads.retrieve(
+                    thread_id=thread_from_db["thread_id"]
+                )
+            except NotFoundError as ne:
+                print(ne.message)
+                thread = client.beta.threads.create(
+                    messages=messages
+                )
         else:
-            thread = client.beta.threads.create()
-            update_thread_id_from_recipient_id(recipient_id, thread.id)
+            thread = client.beta.threads.create(
+                messages=messages
+            )
+            thread_for_db = {
+                'created_at': datetime.now().strftime('%d/%m/%Y, %H:%M'),
+                "thread_id": thread.id,
+                "recipient_id": recipient_id
+            }
+            create_thread(thread=thread_for_db)
         print(thread.id)
         _ = client.beta.threads.messages.create(
             thread_id=thread.id,

@@ -1,18 +1,12 @@
-import config
-
-
-def get_thread_id_from_recipient_id(recipient_id: str) -> str | None:
-  try:
-    thread_id = config.MAPPINGS_DATA['mappings'].get(recipient_id)
-    return thread_id
-  except:
-    return None
-
-
-def update_thread_id_from_recipient_id(recipient_id: str,
-                                       thread_id: str) -> None:
-  try:
-    config.MAPPINGS_DATA['mappings'].update({recipient_id: thread_id})
-    return None
-  except:
-    None
+def format_messages(messages: list[dict[str, any]]) -> list[dict[str, str]]:
+    formatted_messages = []
+    for m in messages:
+        formatted_messages.append({
+            "role": "user",
+            "content": m['query']
+        })
+        formatted_messages.append({
+            "role": "assistant",
+            "content": m['response']
+        })
+    return formatted_messages

@@ -1,11 +1,14 @@
 import threading
+from datetime import datetime
 
 from flask import Flask, request
 
 
+from mongodb_api import create_user, get_user, update_messages
 from openai_api import ask_openai_assistant
 from fb_graph_api import send_message_to_fb_messenger
 import config
+from utils import format_messages
 
 app = Flask(__name__)
 
@@ -26,9 +29,31 @@ def facebook_get():
 
 
 def call_ask_openai_assistant_and_send_message_to_fb_messenger(query: str, recipient_id: str) -> str:
-    message_text = ask_openai_assistant(query, recipient_id)
-    print(message_text)
-    send_message_to_fb_messenger(recipient_id, message_text)
+    user = get_user(recipient_id)
+    if user:
+        formatted_messages = format_messages(messages=user['messages'][-5:])
+    else:
+        formatted_messages = []
+    response = ask_openai_assistant(
+        query, recipient_id, formatted_messages)
+    send_message_to_fb_messenger(
+        recipient_id=recipient_id, message_text=response)
+    if user:
+        update_messages(recipient_id=recipient_id,
+                        query=query, response=response)
+    else:
+        message = {
+            'query': query,
+            'response': response,
+            'createdAt': datetime.now().strftime('%d/%m/%Y, %H:%M')
+        }
+        user = {
+            'recipient_id': recipient_id,
+            'messages': [message],
+            'channel': 'Facebook Messenger',
+            'created_at': datetime.now().strftime('%d/%m/%Y, %H:%M')
+        }
+        create_user(user)
 
 
 @app.route('/facebook', methods=['POST'])

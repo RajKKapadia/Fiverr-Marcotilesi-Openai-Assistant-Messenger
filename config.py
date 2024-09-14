@@ -12,4 +12,5 @@ VERIFY_TOKEN = os.getenv('VERIFY_TOKEN')
 
 ERROR_MESSAGE = 'We are facing an issue at this momemnt, please try after sometime.'
 
-MAPPINGS_DATA = {"mappings": {}}
+CONNECTION_STRING = os.getenv("CONNECTION_STRING")
+DATABASE_NAME = os.getenv("DATABASE_NAME")
