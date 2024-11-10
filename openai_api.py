@@ -1,4 +1,5 @@
 from datetime import datetime
+import time
 
 from openai import OpenAI, NotFoundError
 
@@ -53,6 +54,9 @@ def ask_openai_assistant(query: str, recipient_id: str, messages: list[dict[str,
             )
             if retrieved_run.status == 'completed':
                 flag = False
+            if retrieved_run.status == 'failed':
+                return config.ERROR_MESSAGE
+            time.sleep(1)
         retrieved_messages = client.beta.threads.messages.list(
             thread_id=thread.id
         )

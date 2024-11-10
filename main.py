@@ -13,6 +13,11 @@ from utils import format_messages
 app = Flask(__name__)
 
 
+@app.get("/")
+def handle_home():
+    return "OK", 200
+
+
 @app.route('/facebook', methods=['GET'])
 def facebook_get():
     mode = request.args.get('hub.mode')
